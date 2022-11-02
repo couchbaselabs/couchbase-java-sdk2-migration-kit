@@ -49,7 +49,7 @@ public class IntersectElement implements Element {
             sb.append(" ALL");
         }
 
-        if (!ElementUtils.isNullOrEmpty(with)) {
+        if (!StringUtil.isNullOrEmpty(with)) {
             sb.append(" ");
             sb.append(with);
         }
