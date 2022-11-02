@@ -1,0 +1,21 @@
+= Couchbase SDK 2 Query DSL
+
+The experimental Query DSL in Couchbase SDK 2 was found to scale poorly for larger queries and for SQL++.
+For this reason, it was not brought forward to SDK 3.
+
+As a long-term replacement, we recommend hand-crafting SQL++ statements, or using a tool like Spring Data Couchbase.
+However, if you are migrating from SDK 2 to SDK 3, you might find it convenient to use the Query DSL classes during the migration period.
+
+This repository contains the "missing" experimental Query DSL from Couchbase SDK 2, adapted to work with Couchbase SDK 3.
+
+WARNING: This code is completely unsupported and unmaintained.
+Use at your own risk.
+
+
+== Changes from SDK 2
+
+Some modifications were required to make the Query DSL classes compatible with Couchbase SDK 3:
+
+* `CouchbaseAsyncBucket.CURRENT_BUCKET_IDENTIFIER` moved to `Statement.CURRENT_BUCKET_IDENTIFIER`.
+
+* All uses of `JsonObject` and `JsonArray` now refer to the SDK 3 versions of these classes.
