@@ -1,5 +1,9 @@
 = Couchbase SDK 2 Query DSL
 
+WARNING: This code is completely unsupported and unmaintained.
+Use at your own risk.
+
+
 The experimental Query DSL in Couchbase SDK 2 was found to scale poorly for larger queries and for SQL++.
 For this reason, it was not brought forward to SDK 3.
 
