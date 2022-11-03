@@ -1,8 +1,11 @@
-= Couchbase SDK 2 Query DSL
+= Couchbase SDK 2 Migration Kit
 
-WARNING: This code is completely unsupported and unmaintained.
+This repository contains code that may be useful when migrating from Couchbase SDK 2 to SDK 3.
+
+WARNING: All code in this repository is completely *unsupported* and *unmaintained*.
 Use at your own risk.
 
+== Couchbase SDK 2 Query DSL
 
 The experimental Query DSL in Couchbase SDK 2 was found to scale poorly for larger queries and for SQL++.
 For this reason, it was not brought forward to SDK 3.
@@ -12,14 +15,107 @@ However, if you are migrating from SDK 2 to SDK 3, you might find it convenient 
 
 This repository contains the "missing" experimental Query DSL from Couchbase SDK 2, adapted to work with Couchbase SDK 3.
 
-WARNING: This code is completely unsupported and unmaintained.
-Use at your own risk.
-
-
-== Changes from SDK 2
+=== Query DSL changes from SDK 2
 
 Some modifications were required to make the Query DSL classes compatible with Couchbase SDK 3:
 
 * `CouchbaseAsyncBucket.CURRENT_BUCKET_IDENTIFIER` moved to `Statement.CURRENT_BUCKET_IDENTIFIER`.
 
 * All uses of `JsonObject` and `JsonArray` now refer to the SDK 3 versions of these classes.
+
+== Sub-Document Bridge
+
+The Sub-Document API changed dramatically from SDK 2 to SDK 3.
+This repository offers temporary bridge classes that mimic the API of SDK 2's `LookupInBuilder` and `MutateInBulder`.
+
+Despite having the same names and similar method signatures, the bridge classes are *not* drop-in replacements for their SDK 2 counterparts.
+Instead, they are an intermediate step in the migration process.
+
+The bridge classes use SDK 3 to execute the request, and return SDK 3's `LookupInResult` and `MutateInResult` instead of SDK 2's `DocumentFragment`.
+
+WARNING: SDK 3 uses different exceptions to report Sub-Document failures, and might throw them from different methods than SDK 2.
+These bridge classes use SDK 3 to execute the operations, so any exceptions you see will be from SDK 3.
+
+=== Migration examples for MutateIn
+
+.Before migration (SDK 2 request and result)
+[source,java]
+----
+DocumentFragment<Mutation> fragment =
+    bucket.mutateIn("myDocument")
+        .upsert("a.b.c", "bar", new SubdocOptionsBuilder()
+            .createPath(true) // create "a.b" if absent
+        )
+        .upsertDocument(true) // create document if absent
+        .execute();
+----
+
+.During migration (using SDK 3 with `MutateInBuilder` from this repo)
+[source,java]
+----
+// NOTE: execute() returns SDK 3 MutateInResult
+MutateInResult result =
+    MutateInBuilder.create(bucket.defaultCollection(), "myDocument")
+        .upsert("a.b.c", "bar", new SubdocOptionsBuilder()
+            .createPath(true) // create "a.b" if absent
+        )
+        .upsertDocument(true) // create document if absent
+        .execute();
+----
+
+.After migration (SDK 3 request and result)
+[source,java]
+----
+MutateInResult result =
+    bucket.defaultCollection().mutateIn(
+        "myDocument",
+        List.of(
+            MutateInSpec.upsert("a.b.c", "bar")
+                .createPath() // create "a.b" if missing
+        ),
+        MutateInOptions.mutateInOptions()
+            // create document if missing
+            .storeSemantics(StoreSemantics.UPSERT)
+    );
+----
+
+=== Migration examples for LookupIn
+
+.Before migration (SDK 2 request and result)
+[source,java]
+----
+DocumentFragment<Lookup> fragment =
+    bucket.lookupIn("myDocument")
+        .get("a.b.c")
+        .execute();
+
+String value = fragment.content(0, String.class);
+----
+
+.During migration (using SDK 3 with `LookupInBuilder` from this repo)
+[source,java]
+----
+// NOTE: execute() returns SDK 3 LookupInResult
+LookupInResult result =
+    LookupInBuilder.create(bucket.defaultCollection(), "myDocument")
+        .get("a.b.c")
+        .execute();
+
+String value = result.contentAs(0, String.class);
+----
+
+.After migration (SDK 3 request and result)
+[source,java]
+----
+LookupInResult result =
+    bucket.defaultCollection().lookupIn(
+        "myDocument",
+        List.of(
+            LookupInSpec.get("a.b.c")
+        )
+    );
+----
+
+'''
+WARNING: All code in this repository is completely *unsupported* and *unmaintained*.
+Use at your own risk.
